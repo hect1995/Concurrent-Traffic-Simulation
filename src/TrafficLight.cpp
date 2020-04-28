@@ -28,10 +28,8 @@ void MessageQueue<T>::send(T &&msg)
     // as well as _condition.notify_one() to add a new message to the queue and afterwards send a notification.
     // perform vector modification under the lock
     std::lock_guard<std::mutex> uLock(_mutex);
-
     // add vector to queue
     std::cout << "Traffic light #" << msg << " will be added to the queue" << std::endl;
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     _queue.push_back(std::move(msg));
     _condition.notify_one(); // notify client after pushing new Vehicle into vector
@@ -76,7 +74,6 @@ void TrafficLight::cycleThroughPhases()
     // and toggles the current phase of the traffic light between red and green and sends an update method 
     // to the message queue using move semantics. The cycle duration should be a random value between 4 and 6 seconds. 
     // Also, the while-loop should use std::this_thread::sleep_for to wait 1ms between two cycles.
-    _messages.send(std::move(_currentPhase));
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     float period_light = LO + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(HI-LO)));
     while(true)
@@ -84,7 +81,6 @@ void TrafficLight::cycleThroughPhases()
         if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - begin).count()>1000*period_light){
             _currentPhase = (_currentPhase==TrafficLightPhase::red) ? TrafficLightPhase::green : TrafficLightPhase::red;
             _messages.send(std::move(_currentPhase)); // TODO: Send update to message queue using MOVING SEMANTICS?
-            _condition.notify_one();         
             begin = std::chrono::steady_clock::now();
             period_light = LO + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(HI-LO)));
         }
